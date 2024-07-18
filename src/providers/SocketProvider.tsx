@@ -19,7 +19,7 @@ const SocketContext = createContext<SocketContextType>({
     setDataPoints: () => {},
     dataPaused: false,
     setDataPaused: () => {},
-    socket: Socket
+    socket: io(getAddress())
 });
 
 // eslint-disable-next-line react-refresh/only-export-components

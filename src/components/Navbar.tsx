@@ -38,7 +38,7 @@ export default function Navbar({ reset }: { reset: () => void }) {
 
     return (
         <header
-            className="z-50 flex-initial sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+            className="z-50 flex-none sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
             <nav
                 className="w-full gap-6 font-medium flex flex-row justify-between text-sm">
                 <div className="flex items-center gap-2 text-lg font-semibold md:text-base">

@@ -9,12 +9,11 @@ function App() {
     const [isConnected, setIsConnected] = useState(socket?.connected || false);
     const data = useRef<{ [key: string]: number[] }>({});
     const [rendered, setRendered] = useState<{ [key: string]: number[] }>({});
-    const [fields, setFields] = useState<string[]>([]);
     const [selected, setSelected] = useState<string | null>(null);
     const [timer, setTimer] = useState(0);
 
     const sortedFields = useMemo(() => {
-        return fields.sort((a, b) => {
+        return Object.keys(rendered).sort((a, b) => {
             if (a < b) {
                 return -1;
             } else if (a > b) {
@@ -22,7 +21,7 @@ function App() {
             }
             return 0;
         });
-    }, [fields]);
+    }, [rendered]);
 
     const resetData = () => {
         data.current = {};
@@ -31,11 +30,11 @@ function App() {
     };
 
     useEffect(() => {
-        setTimeout(() => {
+        if (!dataPaused) setTimeout(() => {
             setTimer(t => t + 1);
             setRendered(data.current);
         }, 50);
-    }, [timer]);
+    }, [timer, dataPaused]);
 
     useEffect(() => {
         resetData();
@@ -47,15 +46,12 @@ function App() {
         }
 
         function onDisconnect() {
-            setIsConnected(true);
+            setIsConnected(false);
         }
 
         function onData(value: { t: string, d: number, x: number }) {
-            if (dataPaused) return;
-
             if (!data.current[value.t]) {
                 data.current[value.t] = Array(dataPoints).fill(0);
-                setFields(f => [...f, value.t]);
             }
 
             data.current[value.t].push(value.d);
@@ -69,9 +65,9 @@ function App() {
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
-            socket.off('foo', onData);
+            socket.off('data', onData);
         };
-    }, [dataPaused, dataPoints, socket]);
+    }, [dataPoints, socket]);
 
     useEffect(() => {
         for (const [key, value] of Object.entries(data.current)) {
@@ -92,17 +88,17 @@ function App() {
     }
 
     return (
-        <div className="min-w-screen min-h-screen flex flex-col">
+        <div className="w-screen h-screen flex flex-col">
             <Navbar reset={resetData} />
-            <div className="flex-1 flex flex-row">
-                <div className="w-60 p-4 bg-neutral-100">
+            <div className="flex-1 flex flex-row overflow-hidden">
+                <div className="w-60 p-4 bg-neutral-100 overflow-y-scroll">
                     <div className="mb-2 flex flex-row justify-between items-center">
-                        <p>Metrics ({fields.length})</p>
+                        <p>Metrics ({sortedFields.length})</p>
                     </div>
 
-                    {sortedFields.map(field => {
+                    {sortedFields.map((field, i) => {
                         return (
-                            <div className={`mb-4 border rounded-lg p-4 cursor-pointer ${selected === field ? `bg-sky-300` : ''}`} onClick={() => setSelected(field)}>
+                            <div key={i} className={`mb-4 border rounded-lg p-4 cursor-pointer ${selected === field ? `bg-sky-300` : ''}`} onClick={() => setSelected(field)}>
                                 <p className="text-lg font-bold">{field}</p>
                             </div>
                         );

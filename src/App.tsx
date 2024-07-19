@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 import Navbar from '@/components/Navbar.tsx';
 import Graph from '@/components/Graph.tsx';
@@ -8,33 +8,45 @@ function App() {
     const { socket, dataPoints, dataPaused } = useSocket();
     const [isConnected, setIsConnected] = useState(socket?.connected || false);
     const data = useRef<{ [key: string]: number[] }>({});
-    const [rendered, setRendered] = useState<{ [key: string]: number[] }>({});
+    const [fields, setFields] = useState<string[]>([]);
+    const [renderedList, setRenderedList] = useState<number[]>([]);
     const [selected, setSelected] = useState<string | null>(null);
     const [timer, setTimer] = useState(0);
 
-    const sortedFields = useMemo(() => {
-        return Object.keys(rendered).sort((a, b) => {
+    const resetData = () => {
+        data.current = {};
+        setRenderedList([]);
+        setFields([]);
+        setSelected(null);
+    };
+
+    /*useEffect(() => {
+        const interval = setInterval(() => {
+            setTimer(t => t + 1);
+        }, 50);
+
+        return () => {
+            clearInterval(interval);
+        };
+    })*/
+
+    useEffect(() => {
+        if (!dataPaused && selected) {
+            setRenderedList([...data.current[selected]]);
+        }
+        setFields(Object.keys(data.current).sort((a, b) => {
             if (a < b) {
                 return -1;
             } else if (a > b) {
                 return 1;
             }
             return 0;
-        });
-    }, [rendered]);
+        }));
 
-    const resetData = () => {
-        data.current = {};
-        setRendered({});
-        setSelected(null);
-    };
-
-    useEffect(() => {
-        if (!dataPaused) setTimeout(() => {
+        setTimeout(() => {
             setTimer(t => t + 1);
-            setRendered(data.current);
         }, 50);
-    }, [timer, dataPaused]);
+    }, [timer, dataPaused, selected]);
 
     useEffect(() => {
         resetData();
@@ -93,10 +105,10 @@ function App() {
             <div className="flex-1 flex flex-row overflow-hidden">
                 <div className="w-60 p-4 bg-neutral-100 overflow-y-scroll">
                     <div className="mb-2 flex flex-row justify-between items-center">
-                        <p>Metrics ({sortedFields.length})</p>
+                        <p>Metrics ({fields.length})</p>
                     </div>
 
-                    {sortedFields.map((field, i) => {
+                    {fields.map((field, i) => {
                         return (
                             <div key={i} className={`mb-4 border rounded-lg p-4 cursor-pointer ${selected === field ? `bg-sky-300` : ''}`} onClick={() => setSelected(field)}>
                                 <p className="text-lg font-bold">{field}</p>
@@ -105,7 +117,7 @@ function App() {
                     })}
                 </div>
                 {selected !== null ? <div className="flex-1 grid grid-cols-1 gap-y-4">
-                    <Graph data={rendered[selected].map((x, i) => ({ index: i, desktop: x }))} />
+                    <Graph data={renderedList.map((x, i) => ({ index: i, desktop: x }))} />
                 </div> : <div className="flex-1 flex flex-col justify-center items-center">
                     <p>No data selected</p>
                 </div>}

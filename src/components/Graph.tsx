@@ -13,34 +13,32 @@ export default function Graph({ data }: { data: { index: number, desktop: number
 
     return (
         <AspectRatio ratio={16 / 9} className="p-4 flex flex-col">
-            <ChartContainer config={{}}>
-                <ChartContainer config={chartConfig}>
-                    <AreaChart
-                        accessibilityLayer
-                        data={data}
-                        margin={{
-                            left: 12,
-                            right: 12,
-                        }}
-                    >
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                            dataKey="index"
-                            tickLine={false}
-                            axisLine={false}
-                            tickMargin={8}
-                        />
-                        <YAxis />
-                        <Area
-                            dataKey="desktop"
-                            type="linear"
-                            fill="var(--color-desktop)"
-                            fillOpacity={0.4}
-                            stroke="var(--color-desktop)"
-                            isAnimationActive={false}
-                        />
-                    </AreaChart>
-                </ChartContainer>
+            <ChartContainer config={chartConfig}>
+                <AreaChart
+                    accessibilityLayer
+                    data={data}
+                    margin={{
+                        left: 12,
+                        right: 12,
+                    }}
+                >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                        dataKey="index"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                    />
+                    <YAxis />
+                    <Area
+                        dataKey="desktop"
+                        type="linear"
+                        fill="var(--color-desktop)"
+                        fillOpacity={0.4}
+                        stroke="var(--color-desktop)"
+                        isAnimationActive={false}
+                    />
+                </AreaChart>
             </ChartContainer>
         </AspectRatio>
     );

@@ -2,13 +2,21 @@ import { ChartConfig, ChartContainer } from '@/components/ui/chart.tsx';
 import { AspectRatio } from '@/components/ui/aspect-ratio.tsx';
 import { CartesianGrid, Dot, ReferenceLine, Scatter as ScatterPoints, ScatterChart, XAxis, YAxis } from 'recharts';
 
-export default function Scatter({ data, linePoint }: { data: { x: number, y: number }[], linePoint: number[] | null }) {
+export default function Scatter({
+    data,
+    lines,
+    linePoint
+}: {
+    data: { x: number, y: number }[],
+    lines: { c: string, p: {x: number, y: number}[] }[],
+    linePoint: number[] | null
+}) {
     const point = linePoint || [0, 0];
 
     const chartConfig = {
         desktop: {
             label: "Desktop",
-            color: "hsl(var(--chart-1))",
+            color: "hsl(var(--chart-2))",
         },
     } satisfies ChartConfig;
 
@@ -21,6 +29,10 @@ export default function Scatter({ data, linePoint }: { data: { x: number, y: num
                         margin={{
                             left: 12,
                             right: 12,
+                        }}
+                        style={{
+                            width: '100%',
+                            height: '100%'
                         }}
                     >
                         <CartesianGrid strokeDasharray="3 3" />
@@ -50,8 +62,11 @@ export default function Scatter({ data, linePoint }: { data: { x: number, y: num
                             isAnimationActive={false}
                         />
                         {point.filter(x => x === 0).length === 0 &&
-                            <ReferenceLine stroke="#04cf04" fill="#04cf04" strokeWidth={2} segment={[{ x: 0, y: 0 }, { x: point[0], y: point[1] }]} />
+                            <ReferenceLine stroke="#04cf04" strokeWidth={2} segment={[{ x: 0, y: 0 }, { x: point[0], y: point[1] }]} />
                         }
+                        {lines.map((line, i) => (
+                            <ReferenceLine key={i} stroke={line.c} strokeWidth={2} segment={line.p} />
+                        ))}
                     </ScatterChart>
                 </ChartContainer>
             </AspectRatio>

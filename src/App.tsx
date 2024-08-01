@@ -11,10 +11,11 @@ function App() {
     const data = useRef<{ [key: string]: number[] }>({});
     // angle measurements
     const lidarData = useRef<number[] | null>(null);
-    const lastLidar = useRef<number | null>(null);
+    const lidarLines = useRef<{ c: string, p: {x: number, y: number}[] }[]>([]);
     const [fields, setFields] = useState<string[]>([]);
     const [renderedList, setRenderedList] = useState<number[]>([]);
-    const [renderedLidar, setRenderedLidar] = useState<{ points: { x: number, y: number }[], time: number } | null>(null);
+    const [renderedLidar, setRenderedLidar] = useState<{ x: number, y: number }[] | null>(null);
+    const [renderedLidarLines, setRenderedLidarLines] = useState<{ c: string, p: {x: number, y: number}[] }[]>([]);
     const [renderedLidarAngle, setRenderedLidarAngle] = useState<number[] | null>(null);
     const [lidarSelected, setLidarSelected] = useState<boolean>(false);
     const [selected, setSelected] = useState<string | null>(null);
@@ -23,7 +24,7 @@ function App() {
     const resetData = () => {
         data.current = {};
         lidarData.current = null;
-        lastLidar.current = null;
+        lidarLines.current = [];
         setRenderedList([]);
         setRenderedLidar(null);
         setFields([]);
@@ -32,10 +33,10 @@ function App() {
     };
 
     useEffect(() => {
-        if (!dataPaused && selected) {
-            setRenderedList([...data.current[selected]]);
+        if (!dataPaused) {
+            if (selected) setRenderedList([...data.current[selected]]);
 
-            if (lidarData.current !== null && lastLidar.current !== null) {
+            if (lidarData.current !== null) {
                 let points = [];
 
                 // convert imu data from polar to cartesian
@@ -46,7 +47,8 @@ function App() {
                     points.push({ x: Math.round(Math.sin(radians) * distance * 100) / 100, y: Math.round(Math.cos(radians) * distance * 100) / 100 });
                 }
 
-                setRenderedLidar({ points, time: lastLidar.current });
+                setRenderedLidar(points);
+                setRenderedLidarLines(lidarLines.current);
                 if (data.current['lidar.angle'].length > 0) {
                     const distance = 150;
                     const radians = data.current['lidar.angle'].slice(-1)[0] * Math.PI / 180;
@@ -62,8 +64,8 @@ function App() {
             }
             return 0;
         }));
-        if (lastLidar.current !== null && !lidarSelected) {
-            setRenderedLidar({ points: [], time: lastLidar.current });
+        if (!lidarSelected) {
+            setRenderedLidar([]);
         }
 
         setTimeout(() => {
@@ -93,22 +95,26 @@ function App() {
             if (data.current[value.t].length > dataPoints) data.current[value.t] = data.current[value.t].slice(-dataPoints);
         }
 
-        function onLidar(value: { data: number[], time: number }) {
-            lidarData.current = value.data;
-            lastLidar.current = value.time;
-            console.log(value.time);
+        function onLidar(value: string) {
+            lidarData.current = value.split(' ').map(x => parseFloat(x));
+        }
+
+        function onLidarLines(value: { data: { c: string, p: {x: number, y: number}[] }[], time: number }) {
+            lidarLines.current = value.data;
         }
 
         socket.on('connect', onConnect);
         socket.on('disconnect', onDisconnect);
         socket.on('data', onData);
         socket.on('lidar', onLidar);
+        socket.on('lidar_lines', onLidarLines);
 
         return () => {
             socket.off('connect', onConnect);
             socket.off('disconnect', onDisconnect);
             socket.off('data', onData);
             socket.off('lidar', onLidar);
+            socket.off('lidar_lines', onLidarLines);
         };
     }, [dataPoints, socket]);
 
@@ -162,7 +168,7 @@ function App() {
                     })}
                 </div>
                 {lidarSelected && renderedLidar && (
-                    <Scatter data={renderedLidar.points} linePoint={renderedLidarAngle} />
+                    <Scatter data={renderedLidar} linePoint={renderedLidarAngle} lines={renderedLidarLines} />
                 )}
                 {selected !== null && !lidarSelected ? <div className="flex-1 grid grid-cols-1 gap-y-4">
                     <Graph data={renderedList.map((x, i) => ({ index: i, desktop: x }))} />
